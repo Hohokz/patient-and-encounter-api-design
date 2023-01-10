@@ -3,6 +3,8 @@ import { Router } from "express";
 
 const patientRouter = Router();
 
+// Get Pantients
+
 patientRouter.get("/", async (req, res) => {
 
     const searchKey = req.body.searchKey || "";
@@ -23,6 +25,32 @@ patientRouter.get("/", async (req, res) => {
         data: results.rows
     });
 });
+
+patientRouter.get("/:id", async (req, res) => {
+
+    const pantientId = req.params.id
+
+    const results = await pool.query(`SELECT * FROM patients WHERE is_delete=0 AND patientId=$1 `, [pantientId])
+
+    return res.json({
+        data: results.rows[0]
+    });
+});
+
+
+
+patientRouter.get("/:id/encounter", async (req, res) => {
+
+    const pantientId = req.params.id
+
+    const results = await pool.query(`SELECT * FROM encounters WHERE patientId = $1 AND is_delete=0 `, [pantientId])
+    return res.json({
+        data: results.rows[0]
+    });
+
+});
+
+//Create Pantient
 
 patientRouter.post("/", async (req, res) => {
 
@@ -46,43 +74,40 @@ patientRouter.post("/", async (req, res) => {
     ]);
 
     return res.json({
-        message: "Post has been created.",
+        message: "Pantient has been created.",
     });
 });
 
-patientRouter.put("/", async (req, res) => {
+// Create Pantient Encounter by ID
 
-    const updatedPost = {
+patientRouter.post("/:id/encounter", async (req, res) => {
+
+    const pantientId = req.params.id
+
+    const newEncounter = {
         ...req.body,
-        updated_at: new Date()
+        visit: new Date(),
     };
 
-    const whoPatient = [req.body.patient]
-
-    let pantient = await pool.query(`
-    SELECT patientId FROM patients WHERE firstname=$1 OR middlename=$1 OR lastname =$1
-    `, whoPatient)
-
-    const pantientWhoId = pantient.rows[0]
-
     await pool.query(`
-    UPDATE patients
-	SET firstname=$2, middlename=$3, lastname=$4, birthdate=$5, updatedat=$6 WHERE patientId = $1`
-
-        , [
-            pantientWhoId.patientid,
-            updatedPost.firstname,
-            updatedPost.middlename,
-            updatedPost.lastname,
-            updatedPost.birthdate,
-            updatedPost.updated_at
-        ])
+    INSERT INTO encounters(
+	 visit, discharge, physicalexamination, historyofillness, followup, patientid)
+	VALUES ($1,$2,$3,$4,$5,$6);
+    `, [
+        newEncounter.visit,
+        newEncounter.discharge,
+        newEncounter.physicalexamination,
+        newEncounter.historyofillness,
+        newEncounter.followup,
+        pantientId,
+    ]);
 
     return res.json({
-        message: `Post ${updatedPost.firstname} has been updated.`,
+        message: "encounter has been created.",
     });
+});
 
-})
+// Update Pantient by ID
 
 patientRouter.put("/:id", async (req, res) => {
 
@@ -112,42 +137,84 @@ patientRouter.put("/:id", async (req, res) => {
 
 })
 
-patientRouter.delete("/", async (req, res) => {
+// Update Pantient Encounter by ID
 
-    const whoPatient = [req.body.patient]
+patientRouter.put("/encounter/:id", async (req, res) => {
+
+    const updatedPost = {
+        ...req.body,
+        visit: new Date()
+    };
+
+    const encounterId = req.params.id;
+
+    console.log("here")
+    console.log(encounterId)
+
+    await pool.query(`
+    UPDATE encounters
+	SET visit=$2, discharge=$3, physicalexamination=$4, historyofillness=$5, followup=$6 WHERE encounterId = $1`
+
+        , [
+            encounterId,
+            updatedPost.visit,
+            updatedPost.discharge,
+            updatedPost.physicalexamination,
+            updatedPost.historyofillness,
+            updatedPost.followup
+        ])
+
+    return res.json({
+        message: `This encounter has been updated.`,
+    });
+
+})
+
+//Soft Delete Pantient by ID
+
+patientRouter.delete("/:id", async (req, res) => {
 
     const deletePost = {
         ...req.body,
         delete_when: new Date()
     }
 
-    let pantient = await pool.query(`
-    SELECT patientId FROM patients WHERE firstname=$1 OR middlename=$1 OR lastname =$1
-    `, whoPatient)
-
-    const pantientWhoId = pantient.rows[0]
+    const pantientId = req.params.id;
 
     await pool.query(`
     UPDATE patients
 	SET is_delete = 1, delete_when=$2  WHERE patientId = $1`
         , [
-            pantientWhoId.patientid,
+            pantientId,
             deletePost.delete_when,
         ])
 
     return res.json({
-        message: `${whoPatient} has been deleted.`,
+        message: `This Pantient has been deleted.`,
     });
 });
 
-patientRouter.delete("/:id", async (req, res) => {
+//Soft Delete Pantient Encouter by ID
 
-    const pantientId = req.params.id;
+patientRouter.delete("/encounter/:id", async (req, res) => {
 
-    await pool.query(`DELETE FROM patients WHERE patientId=$1`, [pantientId])
+    const deletePost = {
+        ...req.body,
+        delete_when: new Date()
+    }
+
+    const encounterId = req.params.id;
+
+    await pool.query(`
+    UPDATE encounters
+	SET is_delete = 1, delete_when=$2  WHERE encounterId = $1`
+        , [
+            encounterId,
+            deletePost.delete_when,
+        ])
 
     return res.json({
-        message: `${req.body.firstname} has been deleted.`,
+        message: `encounter ${encounterId} has been deleted.`,
     });
 });
 

@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import patientRouter from "./app/pantient.js";
+import encountersRouter from "./app/encounters.js";
 
 async function init() {
     const app = express();
@@ -10,6 +11,7 @@ async function init() {
     app.use(cors());
     app.use(bodyParser.json());
     app.use("/pantient", patientRouter)
+    app.use("/encounter", encountersRouter)
 
     app.get("/", (req, res) => {
         res.send("Hello World!");
