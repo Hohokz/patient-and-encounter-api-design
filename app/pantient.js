@@ -6,8 +6,6 @@ const patientRouter = Router();
 patientRouter.get("/", async (req, res) => {
 
     const searchKey = req.body.searchKey || "";
-    console.log("here")
-    console.log(req.body)
 
     let query = "";
     let values = [];
@@ -27,13 +25,12 @@ patientRouter.get("/", async (req, res) => {
 });
 
 patientRouter.post("/", async (req, res) => {
+
     const newPatient = {
         ...req.body,
         created_at: new Date(),
         updated_at: new Date(),
     };
-
-    console.log(req.body)
 
     await pool.query(`
     INSERT INTO patients(
@@ -68,11 +65,10 @@ patientRouter.put("/", async (req, res) => {
 
     const pantientWhoId = pantient.rows[0]
 
-    console.log(updatedPost)
-
     await pool.query(`
     UPDATE patients
 	SET firstname=$2, middlename=$3, lastname=$4, birthdate=$5, updatedat=$6 WHERE patientId = $1`
+
         , [
             pantientWhoId.patientid,
             updatedPost.firstname,
@@ -86,12 +82,9 @@ patientRouter.put("/", async (req, res) => {
         message: `Post ${updatedPost.firstname} has been updated.`,
     });
 
-
 })
 
 patientRouter.put("/:id", async (req, res) => {
-
-
 
     const updatedPost = {
         ...req.body,
@@ -103,6 +96,7 @@ patientRouter.put("/:id", async (req, res) => {
     await pool.query(`
     UPDATE patients
 	SET firstname=$2, middlename=$3, lastname=$4, birthdate=$5, updatedat=$6 WHERE patientId = $1`
+
         , [
             pantientId,
             updatedPost.firstname,
@@ -156,8 +150,5 @@ patientRouter.delete("/:id", async (req, res) => {
         message: `${req.body.firstname} has been deleted.`,
     });
 });
-
-
-
 
 export default patientRouter;

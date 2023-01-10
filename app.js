@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import patientRouter from "./app/posts.js";
+import patientRouter from "./app/pantient.js";
 
 async function init() {
     const app = express();
